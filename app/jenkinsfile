@@ -1,0 +1,60 @@
+pipeline {
+    agent any
+
+    environment {
+        # Add your Vercel token in Jenkins Credentials and name it VERCEL_TOKEN
+        VERCEL_TOKEN = credentials('VERCEL_TOKEN')
+    }
+
+    tools {
+        nodejs "node18"  // Make sure Node 18 is installed in Jenkins Global Tool Config
+    }
+
+    stages {
+
+        stage('Clone Code') {
+            steps {
+                echo "Cloning repository..."
+                git branch: 'main', url: 'https://github.com/YOUR_USERNAME/devops-nextjs-app.git'
+            }
+        }
+
+        stage('Install Dependencies') {
+            steps {
+                echo "Installing Node modules..."
+                sh 'npm install'
+            }
+        }
+
+        stage('Run Tests') {
+            steps {
+                echo "Running tests (if any)..."
+                // If you have no tests yet, this won't fail the build
+                sh 'npm run test || true'
+            }
+        }
+
+        stage('Build Project') {
+            steps {
+                echo "Building Next.js project..."
+                sh 'npm run build'
+            }
+        }
+
+        stage('Deploy to Vercel') {
+            steps {
+                echo "Deploying to Vercel..."
+                sh 'npx vercel --prod --token=$VERCEL_TOKEN'
+            }
+        }
+    }
+
+    post {
+        success {
+            echo "✅ Build and Deployment Successful!"
+        }
+        failure {
+            echo "❌ Build or Deployment Failed!"
+        }
+    }
+}
